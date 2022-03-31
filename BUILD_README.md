@@ -1,0 +1,1 @@
+This package is fork of [web3.swift](https://github.com/argentlabs/web3.swift) from argent labs. But the lib only support SPM and Cocoapod, if we want to use with XCFramework, we could use `build_xcframework` to build `web3` and all related lib into `out` folder.
