@@ -14,7 +14,7 @@ import GenericJSON
 public struct TypedVariable: Codable, Equatable {
     let name: String
     let type: String
-
+    
     public init(name: String,
                 type: String) {
         self.name = name
@@ -28,7 +28,7 @@ public struct TypedData: Codable, Equatable {
     public let primaryType: String
     public let domain: JSON
     public let message: JSON
-
+    
     public init(types: [String : [TypedVariable]],
                 primaryType: String,
                 domain: JSON,
@@ -47,7 +47,7 @@ extension TypedData: CustomStringConvertible {
         guard
             let encoded = try? encoder.encode(message),
             let string = String(data: encoded, encoding: .utf8) else {
-                return ""
+            return ""
         }
         
         return string
@@ -56,7 +56,7 @@ extension TypedData: CustomStringConvertible {
 
 extension TypedData {
     public var typeHash: Data { encodeType(primaryType: primaryType).web3.keccak256 }
-
+    
     // Whole data blob hash to sign
     public func signableHash() throws -> Data {
         var data = Data([0x19, 0x01])
@@ -64,7 +64,7 @@ extension TypedData {
         data.append(try encodeData(data: message, type: primaryType).web3.keccak256)
         return data.web3.keccak256
     }
-
+    
     /// Type encoding as per EIP712
     public func encodeType(primaryType: String) -> Data {
         var depSet = findDependencies(primaryType: primaryType)
@@ -76,7 +76,7 @@ extension TypedData {
         }.joined()
         return encoded.data(using: .utf8) ?? Data()
     }
-
+    
     /// Object encoding as per EIP712
     public func encodeData(data: JSON, type: String) throws -> Data {
         var encoded = try ABIEncoder.encode(encodeType(primaryType: type).web3.keccak256, staticSize: 32).bytes
@@ -86,7 +86,31 @@ extension TypedData {
         }
         
         let recursiveEncoded: [UInt8] = try valueTypes.flatMap { variable -> [UInt8] in
-            if types[variable.type] != nil {
+            // Decomposit the type if it is array type
+            let components = variable.type.components(separatedBy: CharacterSet(charactersIn: "[]"))
+            let parsedType = components[0]
+            
+            // Check the type is a custom type
+            if types[parsedType] != nil {
+                guard let json = data[variable.name] else {
+                    throw ABIError.invalidValue
+                }
+                
+                // If is custom type array, recursively encode the array
+                if components.count == 3 && components[1].isEmpty {
+                    let encoded = try json.arrayValue!.flatMap { try encodeData(data: $0, type: parsedType).web3.keccak256.web3.bytes }
+                    
+                    return Data(encoded).web3.keccak256.web3.bytes
+                } else if components.count == 3 && !components[1].isEmpty {
+                    let num = String(components[1].filter { "0"..."9" ~= $0 })
+                    guard let int = Int(num), int == json.arrayValue?.count ?? 0 else {
+                        throw ABIError.invalidValue
+                    }
+                    
+                    let encoded = try json.arrayValue!.flatMap { try encodeData(data: $0, type: parsedType) }
+                    return Data(encoded).web3.keccak256.web3.bytes
+                }
+                
                 guard let json = data[variable.name] else {
                     throw ABIError.invalidValue
                 }
@@ -103,20 +127,30 @@ extension TypedData {
         return Data(encoded)
     }
     
+    private func getParsedType(primaryType: String) -> String {
+        // Decomposit the type if it is an array type
+        let components = primaryType.components(separatedBy: CharacterSet(charactersIn: "[]"))
+        let parsedType = components[0]
+
+        return parsedType
+    }
+    
     private func findDependencies(primaryType: String, dependencies: Set<String> = Set<String>()) -> Set<String> {
         var found = dependencies
-        guard !found.contains(primaryType),
-            let primaryTypes = types[primaryType] else {
+        let parsedType = getParsedType(primaryType: primaryType)
+
+        guard !found.contains(parsedType),
+            let primaryTypes = types[parsedType] else {
                 return found
         }
-        found.insert(primaryType)
+        found.insert(parsedType)
         for type in primaryTypes {
             findDependencies(primaryType: type.type, dependencies: found)
                 .forEach { found.insert($0) }
         }
         return found
     }
-
+    
     private func parseAtomicType(_ data: JSON, type: String) throws -> [UInt8] {
         guard let abiType = ABIRawType(rawValue: type) else {
             throw ABIError.invalidValue

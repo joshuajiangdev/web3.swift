@@ -41,7 +41,8 @@ let package = Package(
                     path: "web3sTests",
                     resources: [
                         .copy("Resources/rlptests.json"),
-                        .copy("Account/cryptofights_712.json")
+                        .copy("Account/cryptofights_712.json"),
+                        .copy("Account/real_word_opensea_signTypedDataV4.json")
                     ]),
     ]
 )
