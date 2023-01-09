@@ -42,7 +42,8 @@ let package = Package(
                     resources: [
                         .copy("Resources/rlptests.json"),
                         .copy("Account/cryptofights_712.json"),
-                        .copy("Account/real_word_opensea_signTypedDataV4.json")
+                        .copy("Account/real_word_opensea_signTypedDataV4.json"),
+                        .copy("Account/real_word_opensea_signTypedData.json")
                     ]),
     ]
 )

@@ -235,6 +235,14 @@ class EthereumAccount_SignTypedTests: XCTestCase {
         XCTAssertEqual(try! realWorldTypedData.signableHash().web3.hexString, "0x76a61293096587b582305a07a60785f92b99ae6c8647c4bcf46d6651db0bd778")
     }
     
+    func test_Real_world_Opensea_TypedData() {
+        let realWorldUrl = Bundle.module.url(forResource: "real_word_opensea_signTypedData", withExtension: "json")!
+        let realWorldData = try! Data(contentsOf: realWorldUrl)
+        let realWorldTypedData = try! decoder.decode(TypedData.self, from: realWorldData)
+        print(try! realWorldTypedData.signableHash().web3.hexString)
+        XCTAssertEqual(try! realWorldTypedData.signableHash().web3.hexString, "0xd05cd5340a4fc9de77d5384b5a98e1b8c20fb94600c518d4b4c366ecbdb1d11d")
+    }
+    
     func test_GivenProdExample_ItHashesCorrectly() {
         let url = Bundle.module.url(forResource: "cryptofights_712", withExtension: "json")!
         let data = try! Data(contentsOf: url)
