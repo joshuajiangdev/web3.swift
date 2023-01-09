@@ -41,6 +41,16 @@ echo "$libsecp256k1_modulemap" > web3.swift-iphonesimulator.xcarchive/Products/L
 echo "$keccaktiny_modulemap" > web3.swift-iphoneos.xcarchive/Products/Library/Frameworks/keccaktiny.framework/Modules/module.modulemap
 echo "$keccaktiny_modulemap" > web3.swift-iphonesimulator.xcarchive/Products/Library/Frameworks/keccaktiny.framework/Modules/module.modulemap
 
+mkdir web3.swift-iphonesimulator.xcarchive/Products/Library/Frameworks/libsecp256k1.framework/Headers
+mkdir web3.swift-iphoneos.xcarchive/Products/Library/Frameworks/libsecp256k1.framework/Headers
+mkdir web3.swift-iphonesimulator.xcarchive/Products/Library/Frameworks/keccaktiny.framework/Headers
+mkdir web3.swift-iphoneos.xcarchive/Products/Library/Frameworks/keccaktiny.framework/Headers
+
+touch web3.swift-iphonesimulator.xcarchive/Products/Library/Frameworks/libsecp256k1.framework/Headers/libsecp256k1.h
+touch web3.swift-iphoneos.xcarchive/Products/Library/Frameworks/libsecp256k1.framework/Headers/libsecp256k1.h
+touch web3.swift-iphonesimulator.xcarchive/Products/Library/Frameworks/keccaktiny.framework/Headers/keccaktiny.h
+touch web3.swift-iphoneos.xcarchive/Products/Library/Frameworks/keccaktiny.framework/Headers/keccaktiny.h
+
 # Generate xcframeworks.
 frameworks=$(find web3.swift-iphonesimulator.xcarchive -name "*.framework" -exec basename {} \;)
 for f in $frameworks; do
