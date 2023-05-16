@@ -239,8 +239,14 @@ class EthereumAccount_SignTypedTests: XCTestCase {
         let realWorldUrl = Bundle.module.url(forResource: "real_word_opensea_signTypedData", withExtension: "json")!
         let realWorldData = try! Data(contentsOf: realWorldUrl)
         let realWorldTypedData = try! decoder.decode(TypedData.self, from: realWorldData)
-        print(try! realWorldTypedData.signableHash().web3.hexString)
         XCTAssertEqual(try! realWorldTypedData.signableHash().web3.hexString, "0xd05cd5340a4fc9de77d5384b5a98e1b8c20fb94600c518d4b4c366ecbdb1d11d")
+    }
+    
+    func test_bad_TypedData() {
+        let badTypedDataUrl = Bundle.module.url(forResource: "malicous_typedData", withExtension: "json")!
+        let badTypedDataData = try! Data(contentsOf: badTypedDataUrl)
+        let badTypedData = try! decoder.decode(TypedData.self, from: badTypedDataData)
+        XCTAssertFalse(badTypedData.description.contains("DO_NOT_APPEAR"))
     }
     
     func test_GivenProdExample_ItHashesCorrectly() {

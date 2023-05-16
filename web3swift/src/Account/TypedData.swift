@@ -12,8 +12,8 @@ import GenericJSON
 
 /// A type value description
 public struct TypedVariable: Codable, Equatable {
-    let name: String
-    let type: String
+    public let name: String
+    public let type: String
     
     public init(name: String,
                 type: String) {
@@ -44,13 +44,47 @@ extension TypedData: CustomStringConvertible {
     public var description: String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
+        
+        let finalMessage = try! generateMessageToBeSigned(data: message, type: primaryType)
         guard
-            let encoded = try? encoder.encode(message),
+            let encoded = try? encoder.encode(finalMessage),
             let string = String(data: encoded, encoding: .utf8) else {
             return ""
         }
         
         return string
+    }
+    
+    func generateMessageToBeSigned(data: JSON, type: String) throws -> [String:JSON] {
+        var result: [String:JSON] = [:]
+        
+        guard let valueTypes = types[type] else {
+            throw ABIError.invalidType
+        }
+        
+        try valueTypes.forEach { variable in
+            
+            // Decomposit the type if it is array type
+            let components = variable.type.components(separatedBy: CharacterSet(charactersIn: "[]"))
+            let parsedType = components[0]
+            
+            // Check the type is a custom type
+            if types[parsedType] != nil {
+                guard let json = data[variable.name] else {
+                    throw ABIError.invalidValue
+                }
+                
+                // If is custom type array, recursively encode the array
+                let value = try generateMessageToBeSigned(data: json, type: parsedType)
+                result[variable.name] = JSON.object(value)
+            } else if let jsonValue = data[variable.name] {
+                result[variable.name] = jsonValue
+            } else {
+                return
+            }
+        }
+        
+        return result
     }
 }
 
