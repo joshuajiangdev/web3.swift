@@ -18,7 +18,7 @@ enum KeyUtilError: Error {
     case badArguments
 }
 
-class KeyUtil {
+public class KeyUtil {
     static func generatePrivateKeyData() -> Data? {
         return Data.randomOfLength(32)
     }
@@ -108,7 +108,7 @@ class KeyUtil {
         return signature
     }
 
-    static func recoverPublicKey(message: Data, signature: Data) throws -> String {
+    public static func recoverPublicKey(message: Data, signature: Data) throws -> String {
         if signature.count != 65 || message.count != 32 {
             throw KeyUtilError.badArguments
         }
@@ -123,13 +123,13 @@ class KeyUtil {
         let signaturePtr = UnsafeMutablePointer<secp256k1_ecdsa_recoverable_signature>.allocate(capacity: 1)
         defer { signaturePtr.deallocate() }
 
-        let serializedSignature = Data(signature[0..<64])
+        let serializedSignature = Data(signature[0 ..< 64])
         var v = Int32(signature[64])
-        if v >= 27 && v <= 30 {
+        if v >= 27, v <= 30 {
             v -= 27
-        } else if v >= 31 && v <= 34 {
+        } else if v >= 31, v <= 34 {
             v -= 31
-        } else if v >= 35 && v <= 38 {
+        } else if v >= 35, v <= 38 {
             v -= 35
         }
 
@@ -147,11 +147,10 @@ class KeyUtil {
                 throw KeyUtilError.signatureFailure
             }
         }
-        var size: Int = 65
+        var size = 65
         var rv = Data(count: size)
         rv.withUnsafeMutableBytes {
             secp256k1_ec_pubkey_serialize(ctx, $0.bindMemory(to: UInt8.self).baseAddress!, &size, pubkey, UInt32(SECP256K1_EC_UNCOMPRESSED))
-            return
         }
         return "0x\(rv[1...].web3.keccak256.web3.hexString.suffix(40))"
     }
